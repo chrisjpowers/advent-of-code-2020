@@ -1,16 +1,17 @@
 import re
+import uuid
 
 class InvalidPassportFieldError(BaseException):
     pass
 
 
-class ValidatedField:
+class ValidatedField(object):
     def __init__(self, func):
         self.func = func
-        self.value = None
+        self.id = uuid.uuid1()
     
     def __get__(self, obj, objtype):
-        return self.value
+        return getattr(obj, f"validated-field-{self.id}", None)
 
     def __set__(self, obj, val):
         try:
@@ -19,7 +20,7 @@ class ValidatedField:
             is_valid = False
 
         if is_valid:
-            self.value = val
+            setattr(obj, f"validated-field-{self.id}", val)
         else:
             raise(InvalidPassportFieldError(f"Invalid value {val}"))
 
@@ -48,17 +49,18 @@ class Passport:
     @classmethod
     def parse(cls, text):
         passport = cls()
-        data = {}
-        pairs = re.findall("(\S+:\S+)", text)
+        pairs = re.findall("((?:byr|iyr|eyr|hgt|hcl|ecl|pid|cid):[a-z0-9#]+)", text)
         for pair in pairs:
             key, val = pair.split(":")
-            if key in ['byr', 'iyr', 'eyr', 'hgt', 'hcl', 'ecl', 'pid', 'cid']:
-                setattr(passport, key, val)
+            setattr(passport, key, val)
         return passport
     
     def is_valid(self):
         return self.byr and self.iyr and self.eyr and self.hgt and \
                self.hcl and self.ecl and self.pid
+    
+    def __repr__(self):
+        return f"<Password byr={self.byr} iyr={self.iyr} eyr={self.eyr} hcl={self.hcl} ecl={self.ecl} pid={self.pid} hgt={self.hgt} cid={self.cid}>"
 
 
 if __name__ == '__main__':
