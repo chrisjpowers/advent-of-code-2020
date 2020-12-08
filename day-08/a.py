@@ -12,8 +12,13 @@ class InfiniteLooper:
         self.commands = commands
     
     def run(self, line_number=0, acc=0):
+        if line_number >= len(self.commands):
+            self.is_complete = True
+            return acc
+
         cmd, num, visited = self.commands[line_number]
         if visited:
+            self.is_complete = False
             return acc
         self.commands[line_number] = (cmd, num, True)
 
